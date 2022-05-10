@@ -3,23 +3,26 @@ package main
 import (
 	json2 "encoding/json"
 	"github.com/daurensky/kazakh-dream/db"
+	"github.com/daurensky/kazakh-dream/models"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 )
 
 func main() {
 	http.Handle("/", http.FileServer(http.Dir("static")))
 
-	http.HandleFunc("/product", handleGetProducts)
-	http.HandleFunc("/product/store", handleStoreProduct)
-	http.HandleFunc("/product/update", handleUpdateProduct)
+	http.HandleFunc("/api/product", handleGetProducts)
+	http.HandleFunc("/api/product/show", handleShowProduct)
+	http.HandleFunc("/api/product/store", handleStoreProduct)
+	http.HandleFunc("/api/product/update", handleUpdateProduct)
 
-	http.HandleFunc("/order", handleGetOrders)
-	http.HandleFunc("/update-order-status", handleUpdateOrderStatus)
+	http.HandleFunc("/api/order", handleGetOrders)
+	http.HandleFunc("/api/update-order-status", handleUpdateOrderStatus)
 
-	err := http.ListenAndServe("localhost:8080", http.DefaultServeMux)
+	err := http.ListenAndServe(":8000", http.DefaultServeMux)
 
 	if err != nil {
 		panic(err)
@@ -46,20 +49,108 @@ func handleGetProducts(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleStoreProduct(w http.ResponseWriter, r *http.Request) {
-	//name := strings.TrimSpace(r.PostFormValue("name"))
-	//price := strings.TrimSpace(r.PostFormValue("price"))
-	//composition := strings.TrimSpace(r.PostFormValue("composition"))
-	//
-	//photo, handler, err := r.FormFile("photo")
+func handleShowProduct(w http.ResponseWriter, r *http.Request) {
+	formProductId := strings.TrimSpace(r.FormValue("id"))
 
-	//if err != nil {
-	//	panic(err)
-	//}
+	productId, err := strconv.Atoi(formProductId)
+
+	if err != nil {
+		panic(err)
+	}
+
+	product, err := db.ShowProduct(productId)
+
+	if err != nil {
+		panic(err)
+	}
+
+	json, err := json2.Marshal(product)
+
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = w.Write(json)
+
+	if err != nil {
+		panic(err)
+	}
+}
+
+func handleStoreProduct(w http.ResponseWriter, r *http.Request) {
+	name := strings.TrimSpace(r.PostFormValue("name"))
+	formPrice := strings.TrimSpace(r.PostFormValue("price"))
+	formComposition := strings.TrimSpace(r.PostFormValue("composition"))
+	photoUrl := strings.TrimSpace(r.PostFormValue("photo_url"))
+
+	price, err := strconv.ParseFloat(formPrice, 64)
+
+	if err != nil {
+		panic(err)
+	}
+
+	composition := strings.Split(formComposition, ",")
+
+	for i, _ := range composition {
+		composition[i] = strings.TrimSpace(composition[i])
+	}
+
+	product := models.Product{
+		Price:       price,
+		PhotoUrl:    photoUrl,
+		Composition: composition,
+		Name:        name,
+	}
+
+	err = db.StoreProduct(product)
+
+	if err != nil {
+		panic(err)
+	}
 }
 
 func handleUpdateProduct(w http.ResponseWriter, r *http.Request) {
+	formProductId := strings.TrimSpace(r.FormValue("id"))
 
+	productId, err := strconv.Atoi(formProductId)
+
+	if err != nil {
+		panic(err)
+	}
+
+	product, err := db.ShowProduct(productId)
+
+	if err != nil {
+		panic(err)
+	}
+
+	name := strings.TrimSpace(r.PostFormValue("name"))
+	formPrice := strings.TrimSpace(r.PostFormValue("price"))
+	formComposition := strings.TrimSpace(r.PostFormValue("composition"))
+	photoUrl := strings.TrimSpace(r.PostFormValue("photo_url"))
+
+	price, err := strconv.ParseFloat(formPrice, 64)
+
+	if err != nil {
+		panic(err)
+	}
+
+	composition := strings.Split(formComposition, ",")
+
+	for i, _ := range composition {
+		composition[i] = strings.TrimSpace(composition[i])
+	}
+
+	product.Price = price
+	product.PhotoUrl = photoUrl
+	product.Composition = composition
+	product.Name = name
+
+	err = db.UpdateProduct(product)
+
+	if err != nil {
+		panic(err)
+	}
 }
 
 func handleGetOrders(w http.ResponseWriter, r *http.Request) {

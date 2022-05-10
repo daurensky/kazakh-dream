@@ -16,17 +16,17 @@ const renderOrders = async () => {
     ordersTableBody.innerHTML = ''
 
     try {
-        const res = await fetch('/order')
+        const res = await fetch('/api/order')
 
         const orders = await res.json()
 
-        orders.forEach(({Id, Client, CreatedAt, Products, Status}, i) => {
+        orders?.forEach(({Id, Client, CreatedAt, Products, Status}, i) => {
             let totalPrice = 0
-            let composition = []
+            let products = []
 
-            Products.forEach(({Price, Name}) => {
+            Products?.forEach(({Price, Name}) => {
                 totalPrice += Price
-                composition.push(Name)
+                products.push(Name)
             })
 
             ordersTableBody.innerHTML += `
@@ -35,7 +35,7 @@ const renderOrders = async () => {
                     <td>${Client.Address}, ${Client.Phone}, ${Client.Name}</td>
                     <td>${CreatedAt}</td>
                     <td>${totalPrice} тг.</td>
-                    <td>${composition.join(', ')}</td>
+                    <td>${products.join(', ') || '[Неизвестно]'}</td>
                     <td>
                         <div class="d-flex gap-1">
                             <select class="form-select w-auto order-status" data-order-id="${Id}">
@@ -52,13 +52,19 @@ const renderOrders = async () => {
         })
 
         document.querySelectorAll('.order-status-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', async () => {
                 const orderId = btn.dataset.orderId
                 const status = document.querySelector(`.order-status[data-order-id="${orderId}"]`).value
-                updateOrderStatus(orderId, status)
+
+                btn.disabled = true
+
+                await updateOrderStatus(orderId, status)
+
+                btn.disabled = false
             })
         })
     } catch (e) {
+        console.log(e)
         alert('Произошла ошибка при загрузки меню')
     } finally {
         spinner.classList.add('d-none')
@@ -74,13 +80,14 @@ const updateOrderStatus = async (orderId, status) => {
         formData.append('order_id', orderId)
         formData.append('status', status)
 
-        await fetch('/update-order-status', {
+        await fetch('/api/update-order-status', {
             method: 'post',
             body: formData
         })
 
         alert('Статус успешно изменен!')
     } catch (e) {
-        alert('Произошла ошибка при изменентт статуса')
+        console.log(e)
+        alert('Произошла ошибка при изменении статуса')
     }
 }

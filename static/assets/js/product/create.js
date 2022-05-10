@@ -6,13 +6,14 @@ form.addEventListener('submit', async e => {
     const formData = new FormData(e.target)
 
     try {
-        await fetch('/product/store', {
+        await fetch('/api/product/store', {
             method: 'post',
             body: formData
         })
-
-        window.location.href = '/'
     } catch (e) {
+        console.log(e)
         alert('Произошла ошибка при добавлении продукта')
+    } finally {
+        window.location.href = '/'
     }
 })

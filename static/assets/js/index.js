@@ -3,16 +3,12 @@ const productsTableWrapper = document.querySelector('#products-table-wrapper')
 const productsTableBody = productsTableWrapper.querySelector('tbody')
 
 const renderOrders = async () => {
-    spinner.classList.remove('d-none')
-    productsTableWrapper.classList.add('d-none')
-    productsTableBody.innerHTML = ''
-
     try {
-        const res = await fetch('/product')
+        const res = await fetch('/api/product')
 
         const products = await res.json()
 
-        products.forEach(({Id, Name, Price, PhotoUrl, Composition}, i) => {
+        products?.forEach(({Id, Name, Price, PhotoUrl, Composition}, i) => {
             productsTableBody.innerHTML += `
                 <tr>
                     <td>${i + 1}</td>
@@ -31,6 +27,7 @@ const renderOrders = async () => {
             `
         })
     } catch (e) {
+        console.log(e)
         alert('Произошла ошибка при загрузки меню')
     } finally {
         spinner.classList.add('d-none')

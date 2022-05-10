@@ -45,7 +45,7 @@ func ShowOrder(orderId int) (models.Order, error) {
 
 	orderProductsFromDB, err := db.Query(`
 		SELECT p.id,
-			   p.price,
+			   SUM(p.price),
 			   p.photo_url,
 			   p.composition,
 			   CASE WHEN COUNT(p.id) > 1 THEN CONCAT(p.name, ' ', COUNT(p.id), ' шт') ELSE p.name END AS name

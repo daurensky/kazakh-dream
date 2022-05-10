@@ -14,12 +14,20 @@ func GetProducts() ([]models.Product, error) {
 		return nil, err
 	}
 
-	productsFromDB, err := db.Query("SELECT * FROM kazakh_dream.public.products")
+	productsFromDB, err := db.Query(`
+		SELECT id,
+		       name,
+		       price,
+		       photo_url,
+		       composition
+		FROM kazakh_dream.public.products
+		ORDER BY id
+	`)
 
 	for productsFromDB.Next() {
 		product := models.Product{}
 
-		err := productsFromDB.Scan(&product.Id, &product.Price, &product.PhotoUrl, pq.Array(&product.Composition), &product.Name)
+		err := productsFromDB.Scan(&product.Id, &product.Name, &product.Price, &product.PhotoUrl, pq.Array(&product.Composition))
 
 		if err != nil {
 			return nil, err
